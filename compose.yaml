@@ -1,0 +1,9 @@
+services:
+  business-logic:
+    build: .
+    image: blk-hacking-ind-ankita-mahajan
+    container_name: hacking_container
+    ports:
+      - "5477:5477"
+    restart: always
+  

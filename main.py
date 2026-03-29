@@ -92,7 +92,7 @@ class TransactionFilterResponse(BaseModel):
 
 class ReturnsRequest(BaseModel):
     age: int = Field(..., description="Age of the investor")
-    wage: float = Field(..., description="Annual wage/salary")
+    wage: float = Field(..., description="Monthly wage/salary")
     inflation: float = Field(..., description="Inflation rate as percentage")
     transactions: List[TransactionInput] = Field(..., description="List of transactions (date and amount only)")
     q: Optional[List[QPeriod]] = Field(default=[], description="List of q periods (fixed amount override)")
@@ -207,20 +207,23 @@ def is_in_k_period(transaction_date: str, k_periods: List[KPeriod]) -> bool:
 
 
 def calculate_tax(income: float) -> float:
-    taxable_income = max(0, income - 50000)
-    
+    taxable_income = max(0.0, income)
+
     if taxable_income <= 700000:
         return 0.0
     elif taxable_income <= 1000000:
         return (taxable_income - 700000) * 0.10
     elif taxable_income <= 1200000:
-        return 30000 + (taxable_income - 1000000) * 0.20
+        return 30000 + (taxable_income - 1000000) * 0.15
+    elif taxable_income <= 1500000:
+        return 60000 + (taxable_income - 1200000) * 0.20
     else:
-        return 70000 + (taxable_income - 1200000) * 0.30
+        return 120000 + (taxable_income - 1500000) * 0.30
 
 
 def calculate_nps_tax_benefit(wage: float, invested_amount: float) -> float:
-    annual_income = wage
+    # Challenge examples provide wage as monthly salary.
+    annual_income = wage * 12
     nps_deduction = min(invested_amount, annual_income * 0.10, 200000.0)
     tax_without_nps = calculate_tax(annual_income)
     tax_with_nps = calculate_tax(annual_income - nps_deduction)
@@ -252,6 +255,12 @@ def calculate_compound_interest(principal: float, interest_rate: float, years: f
 def adjust_inflation(amount: float, inflation_rate: float, years: float) -> float:
     inflation_decimal = inflation_rate / 100.0
     return amount / ((1 + inflation_decimal) ** years)
+
+
+def calculate_real_profit(principal: float, annual_rate_percent: float, inflation_percent: float, years: float) -> float:
+    future_value = calculate_compound_interest(principal, annual_rate_percent / 100.0, years)
+    inflation_adjusted_value = adjust_inflation(future_value, inflation_percent, years)
+    return inflation_adjusted_value - principal
 
 
 def process_transactions_for_returns(
@@ -468,9 +477,12 @@ async def calculate_nps_returns(request: ReturnsRequest):
             
             investment_years = max(1, 60 - request.age)
             
-            profit = calculate_profit(period_remanent, 7.11, investment_years)
-            
-            real_profit = profit / ((1 + request.inflation / 100.0) ** investment_years)
+            real_profit = calculate_real_profit(
+                period_remanent,
+                7.11,
+                request.inflation,
+                investment_years
+            )
             
             tax_benefit = calculate_nps_tax_benefit(request.wage, period_remanent)
             
@@ -510,7 +522,13 @@ async def calculate_index_returns(request: ReturnsRequest):
         
         savings_by_dates = []
         for k_period, amount in savings_by_periods:
-            profit = calculate_profit(amount, 10.5, 1.0)
+            investment_years = max(1, 60 - request.age)
+            profit = calculate_real_profit(
+                amount,
+                14.49,
+                request.inflation,
+                investment_years
+            )
             savings_by_dates.append(
                 SavingsByDate(
                     start=k_period.start,

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: microsave-planner-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    plan: free
+
+  - type: web
+    name: microsave-planner-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: microsave-planner-api
+          property: url

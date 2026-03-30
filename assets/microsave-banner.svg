@@ -1,0 +1,74 @@
+<svg width="1200" height="320" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MicroSave Planner Animated Banner">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a">
+        <animate attributeName="stop-color" values="#0f172a;#111827;#0f172a" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#1e293b">
+        <animate attributeName="stop-color" values="#1e293b;#1f2937;#1e293b" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#164e63">
+        <animate attributeName="stop-color" values="#164e63;#0e7490;#164e63" dur="8s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="320" rx="20" fill="url(#bg)"/>
+
+  <circle cx="180" cy="90" r="90" fill="url(#glow)" filter="url(#softBlur)">
+    <animate attributeName="cx" values="180;260;180" dur="9s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="90;70;90" dur="7s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="980" cy="240" r="120" fill="url(#glow)" filter="url(#softBlur)">
+    <animate attributeName="cx" values="980;900;980" dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="240;210;240" dur="8s" repeatCount="indefinite"/>
+  </circle>
+
+  <g opacity="0.3" stroke="#67e8f9" stroke-width="2" fill="none">
+    <path d="M80 235 C190 130, 300 280, 410 180 C520 80, 620 250, 740 165 C860 80, 980 260, 1120 155">
+      <animate attributeName="stroke-dasharray" values="0 2200;2200 0;0 2200" dur="9s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <text x="80" y="130" fill="#e2e8f0" font-size="56" font-family="'Segoe UI', Arial, sans-serif" font-weight="700" letter-spacing="1">
+    MicroSave Planner
+  </text>
+  <text x="82" y="174" fill="#67e8f9" font-size="24" font-family="'Segoe UI', Arial, sans-serif" font-weight="500">
+    Transform everyday spend into long-term savings momentum
+  </text>
+  <text x="82" y="222" fill="#cbd5e1" font-size="18" font-family="'Consolas', monospace">
+    parse -> validate -> filter -> project returns (NPS | Index)
+  </text>
+
+  <g transform="translate(875,78)">
+    <rect x="0" y="0" width="240" height="152" rx="14" fill="#0b1220" opacity="0.7" stroke="#22d3ee" stroke-opacity="0.55"/>
+    <rect x="18" y="28" width="34" height="82" rx="6" fill="#22d3ee" opacity="0.75">
+      <animate attributeName="height" values="60;82;66;88;60" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="50;28;44;22;50" dur="5.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="66" y="18" width="34" height="92" rx="6" fill="#38bdf8" opacity="0.8">
+      <animate attributeName="height" values="92;72;98;80;92" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="18;38;12;30;18" dur="5.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="114" y="42" width="34" height="68" rx="6" fill="#06b6d4" opacity="0.8">
+      <animate attributeName="height" values="50;68;58;74;50" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="60;42;52;36;60" dur="5.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="162" y="30" width="34" height="80" rx="6" fill="#22d3ee" opacity="0.85">
+      <animate attributeName="height" values="72;84;66;90;72" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="38;26;44;20;38" dur="5.5s" repeatCount="indefinite"/>
+    </rect>
+    <text x="18" y="136" fill="#94a3b8" font-size="13" font-family="'Consolas', monospace">
+      growth simulator
+    </text>
+  </g>
+</svg>

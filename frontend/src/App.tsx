@@ -7,11 +7,10 @@ import type {
   QPeriod,
   ReturnsRequest,
   TransactionInput,
-  TransactionWithCalculated,
 } from "./types";
 
 type Mode = "transactions" | "returns";
-type TransactionTool = "parse" | "validate" | "filter";
+type TransactionTool = "parse" | "filter";
 type ReturnsTool = "nps" | "index";
 type Page = "home" | "planner" | "documentation";
 
@@ -36,7 +35,6 @@ function fmt(value: number): string {
 
 function transactionToolLabel(tool: TransactionTool): string {
   if (tool === "parse") return "Calculate Savings";
-  if (tool === "validate") return "Validate";
   return "Filter";
 }
 
@@ -94,10 +92,6 @@ export default function App() {
       const { transactions, q, p, k } = getInput();
       if (transactionTool === "parse") {
         setResultData(await api.parseTransactions(transactions));
-      } else if (transactionTool === "validate") {
-        const parsed = await api.parseTransactions(transactions);
-        const response = await api.validateTransactions({ wage: Number(wage), transactions: parsed.transactions as TransactionWithCalculated[] });
-        setResultData(response);
       } else {
         const payload: FilterRequest = { wage: Number(wage), transactions, q, p, k };
         setResultData(await api.filterTransactions(payload));
@@ -201,7 +195,6 @@ export default function App() {
                   <p className="sub">Use this to parse, validate, or filter transactions before returns.</p>
                   <div className="tabs compact">
                     <button className={transactionTool === "parse" ? "active" : ""} onClick={() => setTransactionTool("parse")}>Calculate Savings</button>
-                    <button className={transactionTool === "validate" ? "active" : ""} onClick={() => setTransactionTool("validate")}>Validate</button>
                     <button className={transactionTool === "filter" ? "active" : ""} onClick={() => setTransactionTool("filter")}>Filter</button>
                   </div>
                   <Editors
@@ -215,7 +208,7 @@ export default function App() {
                     setKRows={setKRows}
                     showRules={transactionTool === "filter"}
                   />
-                  {(transactionTool === "validate" || transactionTool === "filter") && (
+                  {transactionTool === "filter" && (
                     <div className="group">
                       <label>Wage</label>
                       <input type="number" value={wage} onChange={(e) => setWage(e.target.value)} />

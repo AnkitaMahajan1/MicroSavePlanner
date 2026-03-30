@@ -76,12 +76,20 @@ export type SavingsByDate = {
   amount: number;
   profit: number;
   taxBenefit: number;
+  projectionYears: number;
+  projectedCorpusAt60: number;
+  explanation: string;
 };
 
 export type ReturnsResponse = {
   transactionsTotalAmount: number;
   transactionsTotalCeiling: number;
   savingsByDates: SavingsByDate[];
+  projectionTargetAge: number;
+  investmentHorizonYears: number;
+  totalInvestedAmount: number;
+  retirementCorpusAt60: number;
+  responseMessage: string;
 };
 
 export type PerformanceResponse = {

@@ -20,6 +20,10 @@ type QRow = { start: string; end: string; fixed: string };
 type PRow = { start: string; end: string; extra: string };
 type KRow = { start: string; end: string };
 
+function todayDateInput(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function toApiDateTime(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
@@ -49,7 +53,7 @@ export default function App() {
   const [age, setAge] = useState("30");
   const [inflation, setInflation] = useState("5");
 
-  const [transactionsRows, setTransactionsRows] = useState<TransactionRow[]>([{ date: "2026-02-01", amount: "123.5" }]);
+  const [transactionsRows, setTransactionsRows] = useState<TransactionRow[]>([{ date: todayDateInput(), amount: "123.5" }]);
   const [qRows, setQRows] = useState<QRow[]>([]);
   const [pRows, setPRows] = useState<PRow[]>([]);
   const [kRows, setKRows] = useState<KRow[]>([{ start: "2026-02-01", end: "2026-02-28" }]);
@@ -252,7 +256,7 @@ export default function App() {
 
             <section className="card right">
               <h2>Results</h2>
-              {error ? <div className="error">{error}</div> : <ResultView data={resultData} />}
+              {error ? <div className="error">{error}</div> : <ResultView data={resultData} mode={mode} returnsTool={returnsTool} />}
             </section>
           </main>
         </>
@@ -307,7 +311,7 @@ function Editors(props: {
   const { transactionsRows, setTransactionsRows, qRows, setQRows, pRows, setPRows, kRows, setKRows, showRules } = props;
   return (
     <>
-      <Block title="Transactions" addLabel="+ Add transaction" onAdd={() => setTransactionsRows((p) => [...p, { date: "", amount: "" }])} hint="Each transaction contributes to savings calculation.">
+      <Block title="Transactions" addLabel="+ Add transaction" onAdd={() => setTransactionsRows((p) => [...p, { date: todayDateInput(), amount: "" }])} hint="Each transaction contributes to savings calculation.">
         {transactionsRows.map((row, i) => (
           <div className="rowGrid tx" key={`tx-${i}`}>
             <input type="date" value={row.date} onChange={(e) => setTransactionsRows((p) => p.map((x, idx) => (idx === i ? { ...x, date: e.target.value } : x)))} />
@@ -369,7 +373,7 @@ function Block(props: { title: string; addLabel: string; hint: string; required?
   );
 }
 
-function ResultView({ data }: { data: unknown }) {
+function ResultView({ data, mode, returnsTool }: { data: unknown; mode: Mode; returnsTool: ReturnsTool }) {
   if (!data) return <p className="sub">Run an action to see user-friendly output here.</p>;
 
   const anyData = data as Record<string, unknown>;
@@ -401,15 +405,21 @@ function ResultView({ data }: { data: unknown }) {
 
   if (Array.isArray(anyData.savingsByDates)) {
     const rows = anyData.savingsByDates as Array<Record<string, unknown>>;
+    const retirementMessage = String(anyData.responseMessage || "");
+    const returnsThemeClass = mode === "returns" && returnsTool === "nps" ? "returnsTheme npsTheme" : "returnsTheme indexTheme";
     return (
-      <div>
+      <div className={returnsThemeClass}>
+        {retirementMessage && <div className="docBanner"><strong>Retirement Projection:</strong> {retirementMessage}</div>}
         <div className="stats">
           <Stat label="Total Spent" value={fmt(Number(anyData.transactionsTotalAmount || 0))} />
           <Stat label="Total Ceiling" value={fmt(Number(anyData.transactionsTotalCeiling || 0))} />
+          <Stat label="Total Invested" value={fmt(Number(anyData.totalInvestedAmount || 0))} />
+          <Stat label="Corpus At 60" value={fmt(Number(anyData.retirementCorpusAt60 || 0))} />
+          <Stat label="Horizon (Years)" value={String(anyData.investmentHorizonYears || 0)} />
           <Stat label="Windows" value={String(rows.length)} />
         </div>
-        <table><thead><tr><th>Window</th><th>Savings</th><th>Profit</th><th>Tax Benefit</th></tr></thead><tbody>
-          {rows.map((r, i) => <tr key={i}><td>{String(r.start)} to {String(r.end)}</td><td>{fmt(Number(r.amount || 0))}</td><td>{fmt(Number(r.profit || 0))}</td><td>{fmt(Number(r.taxBenefit || 0))}</td></tr>)}
+        <table><thead><tr><th>Window</th><th>Savings</th><th>Profit</th><th>Corpus At 60</th><th>Tax Benefit</th></tr></thead><tbody>
+          {rows.map((r, i) => <tr key={i}><td>{String(r.start)} to {String(r.end)}</td><td>{fmt(Number(r.amount || 0))}</td><td>{fmt(Number(r.profit || 0))}</td><td>{fmt(Number(r.projectedCorpusAt60 || 0))}</td><td>{fmt(Number(r.taxBenefit || 0))}</td></tr>)}
         </tbody></table>
       </div>
     );

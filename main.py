@@ -106,12 +106,20 @@ class SavingsByDate(BaseModel):
     amount: float = Field(..., description="Total remanent amount invested in this k period")
     profit: float = Field(..., description="Profit from investment (compounded interest)")
     taxBenefit: float = Field(..., description="Tax benefit (NPS only, 0 for index)")
+    projectionYears: int = Field(..., description="Years used for projection until retirement age")
+    projectedCorpusAt60: float = Field(..., description="Projected inflation-adjusted corpus at age 60 for this k period")
+    explanation: str = Field(..., description="Human-friendly explanation of this projected value")
 
 
 class ReturnsResponse(BaseModel):
     transactionsTotalAmount: float = Field(..., description="Sum of valid transaction amounts")
     transactionsTotalCeiling: float = Field(..., description="Sum of valid transaction ceilings")
     savingsByDates: List[SavingsByDate] = Field(..., description="Savings breakdown by k periods")
+    projectionTargetAge: int = Field(..., description="Target age used for corpus projection")
+    investmentHorizonYears: int = Field(..., description="Projection horizon in years")
+    totalInvestedAmount: float = Field(..., description="Total invested remanent amount across all k periods")
+    retirementCorpusAt60: float = Field(..., description="Total projected inflation-adjusted corpus at age 60")
+    responseMessage: str = Field(..., description="Readable summary for normal users")
 
 
 class PerformanceResponse(BaseModel):
@@ -343,7 +351,7 @@ async def root():
     return RedirectResponse(url="/docs")
 
 
-@app.post("/blackrock/challenge/v1/transactions:parse", response_model=TransactionParseResponse)
+@app.post("/microsave/challenge/v1/transactions:parse", response_model=TransactionParseResponse)
 async def parse_transactions(transactions: List[TransactionInput]):
     try:
         parsed = []
@@ -362,7 +370,7 @@ async def parse_transactions(transactions: List[TransactionInput]):
         raise HTTPException(status_code=500, detail=f"Error parsing transactions: {str(e)}")
 
 
-@app.post("/blackrock/challenge/v1/transactions:validate", response_model=TransactionValidateResponse)
+@app.post("/microsave/challenge/v1/transactions:validate", response_model=TransactionValidateResponse)
 async def validate_transactions(request: TransactionValidateRequest):
     try:
         valid_transactions = []
@@ -398,7 +406,7 @@ async def validate_transactions(request: TransactionValidateRequest):
         raise HTTPException(status_code=500, detail=f"Error validating transactions: {str(e)}")
 
 
-@app.post("/blackrock/challenge/v1/transactions:filter", response_model=TransactionFilterResponse)
+@app.post("/microsave/challenge/v1/transactions:filter", response_model=TransactionFilterResponse)
 async def filter_transactions(request: TransactionFilterRequest):
     try:
         valid_transactions = []
@@ -449,7 +457,7 @@ async def filter_transactions(request: TransactionFilterRequest):
         raise HTTPException(status_code=500, detail=f"Error filtering transactions: {str(e)}")
 
 
-@app.post("/blackrock/challenge/v1/returns:nps", response_model=ReturnsResponse)
+@app.post("/microsave/challenge/v1/returns:nps", response_model=ReturnsResponse)
 async def calculate_nps_returns(request: ReturnsRequest):
     try:
         q_periods = request.q if request.q else []
@@ -462,6 +470,7 @@ async def calculate_nps_returns(request: ReturnsRequest):
         total_transaction_amount = sum(t.amount for t in valid_transactions)
         total_ceiling = sum(t.ceiling for t in valid_transactions)
         
+        investment_years = max(1, 60 - request.age)
         k_results = []
         for k in request.k:
             k_start = parse_datetime(k.start)
@@ -475,14 +484,13 @@ async def calculate_nps_returns(request: ReturnsRequest):
                 if is_date_in_range(tx.date, k.start, k.end):
                     period_remanent += float(tx.remanent)
             
-            investment_years = max(1, 60 - request.age)
-            
             real_profit = calculate_real_profit(
                 period_remanent,
                 7.11,
                 request.inflation,
                 investment_years
             )
+            projected_corpus = period_remanent + real_profit
             
             tax_benefit = calculate_nps_tax_benefit(request.wage, period_remanent)
             
@@ -492,20 +500,30 @@ async def calculate_nps_returns(request: ReturnsRequest):
                     end=k.end,
                     amount=period_remanent,
                     profit=real_profit,
-                    taxBenefit=tax_benefit
+                    taxBenefit=tax_benefit,
+                    projectionYears=investment_years,
+                    projectedCorpusAt60=projected_corpus,
+                    explanation=f"By age 60, investing {period_remanent:.2f} in NPS may become {projected_corpus:.2f} (inflation-adjusted)."
                 )
             )
-        
+        total_invested = sum(item.amount for item in k_results)
+        retirement_corpus = sum(item.projectedCorpusAt60 for item in k_results)
+
         return ReturnsResponse(
             transactionsTotalAmount=total_transaction_amount,
             transactionsTotalCeiling=total_ceiling,
-            savingsByDates=k_results
+            savingsByDates=k_results,
+            projectionTargetAge=60,
+            investmentHorizonYears=investment_years,
+            totalInvestedAmount=total_invested,
+            retirementCorpusAt60=retirement_corpus,
+            responseMessage=f"By age 60, if you invest {total_invested:.2f} in NPS, your projected retirement corpus is {retirement_corpus:.2f} (inflation-adjusted)."
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating NPS returns: {str(e)}")
 
 
-@app.post("/blackrock/challenge/v1/returns:index", response_model=ReturnsResponse)
+@app.post("/microsave/challenge/v1/returns:index", response_model=ReturnsResponse)
 async def calculate_index_returns(request: ReturnsRequest):
     try:
         q_periods = request.q if request.q else []
@@ -520,35 +538,46 @@ async def calculate_index_returns(request: ReturnsRequest):
         
         savings_by_periods = calculate_savings_by_k_periods(valid_transactions, request.k)
         
+        investment_years = max(1, 60 - request.age)
         savings_by_dates = []
         for k_period, amount in savings_by_periods:
-            investment_years = max(1, 60 - request.age)
             profit = calculate_real_profit(
                 amount,
                 14.49,
                 request.inflation,
                 investment_years
             )
+            projected_corpus = amount + profit
             savings_by_dates.append(
                 SavingsByDate(
                     start=k_period.start,
                     end=k_period.end,
                     amount=amount,
                     profit=profit,
-                    taxBenefit=0.0
+                    taxBenefit=0.0,
+                    projectionYears=investment_years,
+                    projectedCorpusAt60=projected_corpus,
+                    explanation=f"By age 60, investing {amount:.2f} in Index may become {projected_corpus:.2f} (inflation-adjusted)."
                 )
             )
-        
+        total_invested = sum(item.amount for item in savings_by_dates)
+        retirement_corpus = sum(item.projectedCorpusAt60 for item in savings_by_dates)
+
         return ReturnsResponse(
             transactionsTotalAmount=total_transaction_amount,
             transactionsTotalCeiling=total_ceiling,
-            savingsByDates=savings_by_dates
+            savingsByDates=savings_by_dates,
+            projectionTargetAge=60,
+            investmentHorizonYears=investment_years,
+            totalInvestedAmount=total_invested,
+            retirementCorpusAt60=retirement_corpus,
+            responseMessage=f"By age 60, if you invest {total_invested:.2f} in Index, your projected retirement corpus is {retirement_corpus:.2f} (inflation-adjusted)."
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating index returns: {str(e)}")
 
 
-@app.get("/blackrock/challenge/v1/performance", response_model=PerformanceResponse)
+@app.get("/microsave/challenge/v1/performance", response_model=PerformanceResponse)
 async def get_performance():
     try:
         current_datetime = datetime.now()

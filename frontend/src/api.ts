@@ -37,42 +37,42 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
 export const api = {
   parseTransactions(transactions: TransactionInput[]) {
-    return request<ParseResponse>("/blackrock/challenge/v1/transactions:parse", {
+    return request<ParseResponse>("/microsave/challenge/v1/transactions:parse", {
       method: "POST",
       body: JSON.stringify(transactions),
     });
   },
 
   validateTransactions(payload: ValidateRequest) {
-    return request<ValidateResponse>("/blackrock/challenge/v1/transactions:validate", {
+    return request<ValidateResponse>("/microsave/challenge/v1/transactions:validate", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   filterTransactions(payload: FilterRequest) {
-    return request<FilterResponse>("/blackrock/challenge/v1/transactions:filter", {
+    return request<FilterResponse>("/microsave/challenge/v1/transactions:filter", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   calculateNpsReturns(payload: ReturnsRequest) {
-    return request<ReturnsResponse>("/blackrock/challenge/v1/returns:nps", {
+    return request<ReturnsResponse>("/microsave/challenge/v1/returns:nps", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   calculateIndexReturns(payload: ReturnsRequest) {
-    return request<ReturnsResponse>("/blackrock/challenge/v1/returns:index", {
+    return request<ReturnsResponse>("/microsave/challenge/v1/returns:index", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   getPerformance() {
-    return request<PerformanceResponse>("/blackrock/challenge/v1/performance", {
+    return request<PerformanceResponse>("/microsave/challenge/v1/performance", {
       method: "GET",
     });
   },

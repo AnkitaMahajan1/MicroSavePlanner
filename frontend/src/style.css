@@ -152,6 +152,40 @@ input {
   color: #d2ecff;
 }
 
+.returnsTheme .docBanner {
+  margin-bottom: 10px;
+}
+
+.returnsTheme.npsTheme .docBanner {
+  border-color: #2f7b62;
+  background: linear-gradient(140deg, #14392e, #114134);
+  color: #d7ffef;
+}
+
+.returnsTheme.indexTheme .docBanner {
+  border-color: #316da1;
+  background: linear-gradient(140deg, #16344f, #12395d);
+  color: #d7ecff;
+}
+
+.returnsTheme.npsTheme .stat {
+  border-color: #2f6a58;
+  background: #112d25;
+}
+
+.returnsTheme.npsTheme .stat strong {
+  color: #9af4ce;
+}
+
+.returnsTheme.indexTheme .stat {
+  border-color: #2f5d85;
+  background: #11263b;
+}
+
+.returnsTheme.indexTheme .stat strong {
+  color: #99d3ff;
+}
+
 .docBlock {
   border: 1px solid #2a3f58;
   background: #0f1a2b;

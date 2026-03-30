@@ -15,7 +15,4 @@ services:
     pullRequestPreviewsEnabled: false
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: microsave-planner-api
-          property: url
+        value: https://microsave-planner-api.onrender.com
